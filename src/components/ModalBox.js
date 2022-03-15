@@ -1,8 +1,6 @@
-/* eslint-disable no-alert */
-/* eslint-disable react-native/no-inline-styles */
-
 import React from 'react';
 import {View, Text, TouchableOpacity} from 'react-native';
+
 import {useStateContext} from '../context';
 import Input from './Input';
 

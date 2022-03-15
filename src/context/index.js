@@ -40,9 +40,7 @@ export const StateContextProvider = ({children}) => {
         return;
       }
 
-      // get address through private key
-      const myAddress =
-        web3.eth.accounts.privateKeyToAccount(private_address).address;
+      const myAddress = getPublicAddress();
 
       const nonce = await web3.eth.getTransactionCount(myAddress);
 

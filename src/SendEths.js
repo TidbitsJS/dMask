@@ -2,8 +2,7 @@ import React, {useEffect} from 'react';
 import {View, Text, TouchableOpacity, ActivityIndicator} from 'react-native';
 
 import {useStateContext} from './context';
-import Input from './components/Input';
-import Status from './components/Status';
+import {Input, Status} from './components';
 
 const SendEths = () => {
   const [ethAddress, setEthAddress] = React.useState('');
