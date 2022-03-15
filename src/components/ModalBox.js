@@ -3,17 +3,19 @@
 
 import React from 'react';
 import {View, Text, TouchableOpacity} from 'react-native';
+import {useStateContext} from '../context';
 import Input from './Input';
 
-const ModalBox = ({setModalVisible}) => {
+const ModalBox = () => {
   const [value, setValue] = React.useState('');
+  const {setPrivateKey} = useStateContext();
 
   const handleSubmit = () => {
     if (value.trim() === '' || value.length !== 64) {
       alert('Please enter a valid private key');
       return;
     } else {
-      setModalVisible(false);
+      setPrivateKey(value);
     }
   };
 

@@ -15,13 +15,16 @@ import {
   StatusBar,
   useColorScheme,
   View,
-  Text,
+  LogBox,
 } from 'react-native';
 
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 import ModalBox from './src/components/ModalBox';
 import {StateContextProvider, useStateContext} from './src/context';
 import SendEths from './src/SendEths';
+
+// ignore require cycles are allowed warning
+LogBox.ignoreLogs(['Require cycle:']);
 
 const RenderApp = () => {
   const isDarkMode = useColorScheme() === 'dark';
@@ -44,10 +47,8 @@ const RenderApp = () => {
         padding: 20,
         backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
       }}>
-      {modalVisible && !private_address && (
-        <ModalBox setModalVisible={setModalVisible} />
-      )}
-      {!modalVisible && private_address && <SendEths />}
+      {!private_address && <ModalBox setModalVisible={setModalVisible} />}
+      {private_address && <SendEths />}
     </View>
   );
 };

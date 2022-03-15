@@ -1,19 +1,28 @@
 import React, {useEffect} from 'react';
-import {View, Text, TouchableOpacity} from 'react-native';
+import {View, Text, TouchableOpacity, ActivityIndicator} from 'react-native';
 
 import {useStateContext} from './context';
 import Input from './components/Input';
+import Status from './components/Status';
 
 const SendEths = () => {
   const [ethAddress, setEthAddress] = React.useState('');
   const [ethAmount, setEthAmount] = React.useState();
   const [transactions, setTransactions] = React.useState([]);
-  const {sendEths, getTransactionLogs} = useStateContext();
+  const [transactionLoading, setTransactionLoading] = React.useState(false);
+  const [ethLoading, setEthLoading] = React.useState(false);
+  const [showStatus, setShowStatus] = React.useState({
+    status: false,
+    statusText: '',
+  });
+  const {sendEths, getTransactionLogs, removePrivateKey} = useStateContext();
 
   useEffect(() => {
     const loadTransactions = async () => {
+      setTransactionLoading(true);
       const txLogs = await getTransactionLogs();
       setTransactions(txLogs);
+      setTransactionLoading(false);
     };
 
     loadTransactions();
@@ -31,9 +40,41 @@ const SendEths = () => {
     }
 
     // send eth
+    setEthLoading(true);
     console.log('Sending eth to', ethAddress, 'with amount', ethAmount);
     const result = await sendEths(ethAddress, ethAmount);
     console.log('Transaction result', result);
+    setEthLoading(false);
+
+    // check if transaction was successful, pending or failed
+    if (result.status === true) {
+      setShowStatus({
+        status: true,
+        statusText: 'Transaction successful',
+      });
+    } else if (!result.blockNumber) {
+      setShowStatus({
+        status: true,
+        statusText: 'Transaction pending',
+      });
+    } else {
+      setShowStatus({
+        status: true,
+        statusText: 'Transaction failed',
+      });
+    }
+
+    // hide status after 5 seconds
+    setTimeout(() => {
+      setShowStatus({
+        status: false,
+        statusText: '',
+      });
+    }, 5000);
+
+    // reset form
+    setEthAddress('');
+    setEthAmount();
   };
 
   return (
@@ -41,6 +82,8 @@ const SendEths = () => {
       style={{
         width: '100%',
       }}>
+      {showStatus.status && <Status statusText={showStatus.statusText} />}
+
       <Text
         style={{
           fontSize: 24,
@@ -79,17 +122,68 @@ const SendEths = () => {
           justifyContent: 'center',
           alignItems: 'center',
         }}
-        onPress={handleSubmit}>
-        <Text
-          style={{
-            color: '#fff',
-            fontSize: 18,
-          }}>
-          Send
-        </Text>
+        onPress={() => {
+          if (!ethLoading) {
+            handleSubmit();
+          }
+        }}>
+        {ethLoading ? (
+          <View style={{flexDirection: 'row'}}>
+            <ActivityIndicator size="small" color="#fff" />
+            <Text
+              style={{
+                color: '#fff',
+                fontSize: 18,
+                marginLeft: 10,
+              }}>
+              Sending...
+            </Text>
+          </View>
+        ) : (
+          <Text
+            style={{
+              color: '#fff',
+              fontSize: 18,
+            }}>
+            Send
+          </Text>
+        )}
       </TouchableOpacity>
 
-      {transactions.length > 0 && (
+      {!ethLoading && (
+        <TouchableOpacity
+          style={{
+            backgroundColor: 'red',
+            padding: 10,
+            borderRadius: 5,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginTop: 20,
+          }}
+          onPress={removePrivateKey}>
+          <Text
+            style={{
+              color: '#fff',
+              fontSize: 18,
+            }}>
+            Reset Wallet
+          </Text>
+        </TouchableOpacity>
+      )}
+
+      {transactionLoading && (
+        <View style={{marginVertical: 20}}>
+          <ActivityIndicator size="large" color="#000" />
+        </View>
+      )}
+
+      {!transactionLoading && transactions.length === 0 && (
+        <Text style={{textAlign: 'center', marginTop: 20}}>
+          No transactions yet
+        </Text>
+      )}
+
+      {!transactionLoading && transactions.length > 0 && (
         <View style={{marginTop: 30}}>
           <Text
             style={{

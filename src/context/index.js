@@ -12,8 +12,6 @@ export const StateContextProvider = ({children}) => {
       const isAddress = await getPrivateKey();
       if (isAddress) {
         setPrivateAddress(isAddress);
-      } else {
-        setPrivateAddress(null);
       }
     };
 
@@ -24,81 +22,71 @@ export const StateContextProvider = ({children}) => {
     'https://eth-ropsten.alchemyapi.io/v2/zn5_NFHt5lS36lvktLmVOIC_gJxL-h-l',
   );
 
-  const sendEths = async (address, amount) => {
-    console.log(
-      'parameters',
-      address,
-      amount,
-      'with private ke',
-      private_address,
-    );
-
-    const modifiedAmount = web3.utils.toWei(amount.toString(), 'ether');
-    // check if amount is less than the account balance
-    const walletBalance = await getBalance();
-    if (walletBalance < modifiedAmount) {
-      console.log('Insufficient balance');
-      return;
-    }
-
-    // get address through private key
-    const myAddress =
+  const getPublicAddress = () => {
+    const publicAddress =
       web3.eth.accounts.privateKeyToAccount(private_address).address;
-
-    const nonce = await web3.eth.getTransactionCount(myAddress);
-
-    console.log(
-      'Wallet address is',
-      myAddress,
-      'nonce is',
-      nonce,
-      'balance is',
-      walletBalance,
-    );
-
-    console.log(web3.utils.toWei(amount, 'ether'));
-
-    const transaction = {
-      to: address,
-      value: modifiedAmount,
-      gas: 30000,
-      maxPriorityFeePerGas: 1000000108,
-      nonce: nonce,
-    };
-
-    const signedTransaction = await web3.eth.accounts.signTransaction(
-      transaction,
-      private_address,
-    );
-
-    const result = await web3.eth.sendSignedTransaction(
-      signedTransaction.rawTransaction,
-    );
-
-    return result;
-  };
-
-  const getBalance = async () => {
-    const myAddress =
-      web3.eth.accounts.privateKeyToAccount(private_address).address;
-
-    const balance = await web3.eth.getBalance(myAddress);
-
-    return balance;
-  };
-
-  const getPublicAddress = async () => {
-    const publicAddress = await web3.eth.accounts.privateKeyToAccount(
-      private_address,
-    ).address;
 
     return publicAddress;
   };
 
+  const sendEths = async (address, amount) => {
+    try {
+      const modifiedAmount = web3.utils.toWei(amount.toString(), 'ether');
+
+      // check if amount is less than the account balance
+      const walletBalance = await getBalance();
+      if (walletBalance < modifiedAmount) {
+        console.log('Insufficient balance');
+        return;
+      }
+
+      // get address through private key
+      const myAddress =
+        web3.eth.accounts.privateKeyToAccount(private_address).address;
+
+      const nonce = await web3.eth.getTransactionCount(myAddress);
+
+      const transaction = {
+        to: address,
+        value: modifiedAmount,
+        gas: 30000,
+        maxPriorityFeePerGas: 1000000108,
+        nonce: nonce,
+      };
+
+      const signedTransaction = await web3.eth.accounts.signTransaction(
+        transaction,
+        private_address,
+      );
+
+      const result = await web3.eth.sendSignedTransaction(
+        signedTransaction.rawTransaction,
+      );
+
+      return result;
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const getBalance = async () => {
+    try {
+      const myAddress = getPublicAddress();
+      const balance = await web3.eth.getBalance(myAddress);
+      return balance;
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const getTransactionLogs = async () => {
-    const myAddress = await getPublicAddress();
-    const result = await web3.eth.getPastLogs(myAddress);
-    return result;
+    try {
+      const myAddress = getPublicAddress();
+      const result = await web3.eth.getPastLogs(myAddress);
+      return result;
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const getPrivateKey = async () => {
@@ -123,6 +111,15 @@ export const StateContextProvider = ({children}) => {
     }
   };
 
+  const removePrivateKey = async () => {
+    try {
+      await AsyncStorage.removeItem('private_key');
+      setPrivateAddress(null);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <StateContext.Provider
       value={{
@@ -134,6 +131,7 @@ export const StateContextProvider = ({children}) => {
         getTransactionLogs,
         getPrivateKey,
         setPrivateKey,
+        removePrivateKey,
       }}>
       {children}
     </StateContext.Provider>
