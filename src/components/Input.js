@@ -1,11 +1,23 @@
+/* eslint-disable react-native/no-inline-styles */
 import React from 'react';
-import {View, Text, TextInput} from 'react-native';
+import {View, TextInput} from 'react-native';
 
-const Input = () => {
+const Input = ({value, onChangeText, numeric, placeHolder}) => {
   return (
-    <View>
-      <Text>Input</Text>
-      <TextInput placeholder="some input" />
+    <View style={{width: '100%'}}>
+      <TextInput
+        placeholder={placeHolder ? placeHolder : '2b57sf714b...'}
+        keyboardType={numeric ? 'numeric' : 'default'}
+        onChangeText={onChangeText}
+        value={value}
+        style={{
+          borderWidth: 1,
+          borderColor: '#ccc',
+          padding: 7,
+          borderRadius: 5,
+          marginVertical: 10,
+        }}
+      />
     </View>
   );
 };
