@@ -18,26 +18,28 @@ export const StateContextProvider = ({children}) => {
     };
 
     loadPrivateAddress();
-    console.log('Private address', private_address);
   }, []);
 
-  const sendEths = async ({address, amount}) => {
+  const web3 = createAlchemyWeb3(
+    'https://eth-ropsten.alchemyapi.io/v2/zn5_NFHt5lS36lvktLmVOIC_gJxL-h-l',
+  );
+
+  const sendEths = async (address, amount) => {
     console.log(
-      'Env',
-      process.env.REACT_APP_API_KEY,
-      process.env.REACT_APP_PRIVATE_KEY,
+      'parameters',
+      address,
+      amount,
+      'with private ke',
+      private_address,
     );
 
-    console.log('parameters', address, amount);
-
+    const modifiedAmount = web3.utils.toWei(amount.toString(), 'ether');
     // check if amount is less than the account balance
     const walletBalance = await getBalance();
-    if (walletBalance < amount) {
+    if (walletBalance < modifiedAmount) {
       console.log('Insufficient balance');
       return;
     }
-
-    const web3 = await createAlchemyWeb3(process.env.REACT_APP_API_URL);
 
     // get address through private key
     const myAddress =
@@ -51,39 +53,41 @@ export const StateContextProvider = ({children}) => {
       'nonce is',
       nonce,
       'balance is',
-      balance,
+      walletBalance,
     );
 
-    // const transaction = {
-    //   to: address,
-    //   value: amount,
-    //   gas: 30000,
-    //   maxPriorityFeePerGas: 1000000108,
-    //   nonce: nonce,
-    // };
+    console.log(web3.utils.toWei(amount, 'ether'));
 
-    // const signedTransaction = await web3.eth.accounts.signTransaction(
-    //   transaction,
-    //   private_address,
-    // );
+    const transaction = {
+      to: address,
+      value: modifiedAmount,
+      gas: 30000,
+      maxPriorityFeePerGas: 1000000108,
+      nonce: nonce,
+    };
 
-    // const result = await web3.eth.sendSignedTransaction(
-    //   signedTransaction.rawTransaction,
-    // );
+    const signedTransaction = await web3.eth.accounts.signTransaction(
+      transaction,
+      private_address,
+    );
 
-    // return result;
+    const result = await web3.eth.sendSignedTransaction(
+      signedTransaction.rawTransaction,
+    );
+
+    return result;
   };
 
   const getBalance = async () => {
-    const web3 = await createAlchemyWeb3(process.env.REACT_APP_API_URL);
-    const myAddress = await AsyncStorage.getItem('private_key');
+    const myAddress =
+      web3.eth.accounts.privateKeyToAccount(private_address).address;
+
     const balance = await web3.eth.getBalance(myAddress);
 
     return balance;
   };
 
   const getPublicAddress = async () => {
-    const web3 = await createAlchemyWeb3(process.env.REACT_APP_API_URL);
     const publicAddress = await web3.eth.accounts.privateKeyToAccount(
       private_address,
     ).address;
@@ -91,11 +95,10 @@ export const StateContextProvider = ({children}) => {
     return publicAddress;
   };
 
-  const getTransactionList = async () => {
-    const web3 = await createAlchemyWeb3(process.env.REACT_APP_API_URL);
-    const transactions = await web3.eth.getTransactionHistory(private_address);
-
-    return transactions;
+  const getTransactionLogs = async () => {
+    const myAddress = await getPublicAddress();
+    const result = await web3.eth.getPastLogs(myAddress);
+    return result;
   };
 
   const getPrivateKey = async () => {
@@ -128,7 +131,7 @@ export const StateContextProvider = ({children}) => {
         sendEths,
         getBalance,
         getPublicAddress,
-        getTransactionList,
+        getTransactionLogs,
         getPrivateKey,
         setPrivateKey,
       }}>

@@ -19,7 +19,6 @@ import {
 } from 'react-native';
 
 import {Colors} from 'react-native/Libraries/NewAppScreen';
-import Input from './src/components/Input';
 import ModalBox from './src/components/ModalBox';
 import {StateContextProvider, useStateContext} from './src/context';
 import SendEths from './src/SendEths';

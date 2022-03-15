@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {View, Text, TouchableOpacity} from 'react-native';
 
 import {useStateContext} from './context';
@@ -7,12 +7,22 @@ import Input from './components/Input';
 const SendEths = () => {
   const [ethAddress, setEthAddress] = React.useState('');
   const [ethAmount, setEthAmount] = React.useState();
-  const {sendEths} = useStateContext();
+  const [transactions, setTransactions] = React.useState([]);
+  const {sendEths, getTransactionLogs} = useStateContext();
 
-  const handleSubmit = () => {
+  useEffect(() => {
+    const loadTransactions = async () => {
+      const txLogs = await getTransactionLogs();
+      setTransactions(txLogs);
+    };
+
+    loadTransactions();
+  }, []);
+
+  const handleSubmit = async () => {
     // check if ethAddress is valid
     if (
-      ethAddress.trim().length === 42 ||
+      ethAddress.trim().length !== 42 ||
       ethAddress.indexOf('0x') !== 0 ||
       ethAmount === undefined ||
       ethAmount === 0
@@ -22,7 +32,8 @@ const SendEths = () => {
 
     // send eth
     console.log('Sending eth to', ethAddress, 'with amount', ethAmount);
-    sendEths(ethAddress, ethAmount);
+    const result = await sendEths(ethAddress, ethAmount);
+    console.log('Transaction result', result);
   };
 
   return (
@@ -42,7 +53,7 @@ const SendEths = () => {
 
       <View style={{marginVertical: 20}}>
         <View>
-          <Text>Accound Address</Text>
+          <Text>Account Address</Text>
           <Input
             value={ethAddress}
             onChangeText={text => setEthAddress(text)}
@@ -67,7 +78,8 @@ const SendEths = () => {
           borderRadius: 5,
           justifyContent: 'center',
           alignItems: 'center',
-        }}>
+        }}
+        onPress={handleSubmit}>
         <Text
           style={{
             color: '#fff',
@@ -76,6 +88,28 @@ const SendEths = () => {
           Send
         </Text>
       </TouchableOpacity>
+
+      {transactions.length > 0 && (
+        <View style={{marginTop: 30}}>
+          <Text
+            style={{
+              fontSize: 18,
+              fontWeight: 'bold',
+              color: '#000',
+              marginBottom: 5,
+            }}>
+            Transactions
+          </Text>
+          {transactions.map(transaction => (
+            <View key={transaction.id} style={{marginVertical: 5}}>
+              <Text style={{color: '#1b1b1b'}}>
+                <Text style={{color: '#000', fontWeight: 'bold'}}>To:</Text>{' '}
+                {transaction.address}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
     </View>
   );
 };
